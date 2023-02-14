@@ -2,7 +2,7 @@ const merge = require('lodash/merge');
 const cssMatcher = require('jest-matcher-css');
 const postcss = require('postcss');
 const tailwindcss = require('tailwindcss');
-const customPlugin = require('./index.js');
+const customPlugin = require('./index');
 
 expect.extend({
   toMatchCss: cssMatcher,
@@ -10,18 +10,19 @@ expect.extend({
 
 function generatePluginCss(overrides) {
   const config = {
-    theme: {
-      // Default options for your plugin.
-      customUtilities: {
-        YOUR_PLUGIN_CUSTOM_OPTION: false,
-      },
-    },
-    variants: {
-      // Default variants for your plugin.
-      customUtilities: [],
-    },
     corePlugins: false,
-    plugins: [customPlugin],
+    theme: {},
+    plugins: [
+      customPlugin([
+        {
+          prefix: 'grid-min-item-size',
+          items: {
+            large: 'clamp(24rem, 30%, 100%)',
+          },
+          property: '--grid-min-item-size',
+        },
+      ]),
+    ],
   };
 
   return postcss(tailwindcss(merge(config, overrides)))
@@ -31,60 +32,21 @@ function generatePluginCss(overrides) {
     .then(({ css }) => css);
 }
 
-test('utility classes can be generated', () => {
-  return generatePluginCss().then(css => {
-    expect(css).toMatchCss(`    
-    .example-utility-class {
-      display: block
-    }
-    `);
-  });
-});
-
-test('options can be customized', () => {
+test('css variables can be generated', () => {
   return generatePluginCss({
     theme: {
-      customUtilities: {
-        YOUR_PLUGIN_CUSTOM_OPTION: true,
+      colors: {
+        primary: '#000',
       },
-    },
-  }).then(css => {
-    expect(css).toMatchCss(`    
-    .example-utility-class {
-      display: block
-    }
-    .custom-utility-class {
-      background-color: red
-    }
-    `);
-  });
-});
-
-test('variants can be customized', () => {
-  return generatePluginCss({
-    theme: {
-      screens: {
-        sm: '640px',
+      fontFamily: {
+        base: ['Figtree', 'sans-serif'],
+        heading: ['Albra', 'serif'],
       },
-    },
-    variants: {
-      customUtilities: ['responsive', 'hover'],
     },
   }).then(css => {
     expect(css).toMatchCss(`
-    .example-utility-class {
-      display: block
-    } 
-    .hover\\:example-utility-class:hover {
-      display: block
-    } 
-    @media (min-width: 640px) {
-      .sm\\:example-utility-class {
-        display: block
-      }
-      .sm\\:hover\\:example-utility-class:hover {
-        display: block
-      }
+    .grid-min-item-size-large {
+      --grid-min-item-size: clamp(24rem, 30%, 100%);
     }
     `);
   });
