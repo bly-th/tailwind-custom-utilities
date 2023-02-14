@@ -13,15 +13,12 @@ function generatePluginCss(overrides) {
     corePlugins: false,
     theme: {},
     plugins: [
-      customPlugin([
-        {
-          prefix: 'grid-min-item-size',
-          items: {
-            large: 'clamp(24rem, 30%, 100%)',
-          },
+      customPlugin({
+        gridMinItemSize: {
+          name: 'grid-min-item-size',
           property: '--grid-min-item-size',
         },
-      ]),
+      }),
     ],
   };
 
@@ -41,6 +38,9 @@ test('css variables can be generated', () => {
       fontFamily: {
         base: ['Figtree', 'sans-serif'],
         heading: ['Albra', 'serif'],
+      },
+      gridMinItemSize: {
+        large: 'clamp(24rem, 30%, 100%)',
       },
     },
   }).then(css => {

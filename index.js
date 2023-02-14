@@ -2,35 +2,33 @@ const plugin = require('tailwindcss/plugin');
 const postcss = require('postcss');
 const postcssJs = require('postcss-js');
 
-module.exports = plugin.withOptions(function (customUtilities = []) {
+const getFixedKey = key => {
+  if (key === 'DEFAULT' || key === 'default') {
+    return 'default';
+  }
+  return key.replace('/', '-').replace('.', '_');
+};
+
+module.exports = plugin.withOptions(function (customUtilities = {}) {
   return function ({ config, addUtilities }) {
-    const currentConfig = config();
+    // eslint-disable-next-line no-restricted-syntax
+    Object.entries(customUtilities).forEach(([key, object]) => {
+      if (!object) return;
 
-    customUtilities.forEach(({ key, prefix, items, property }) => {
-      if (items) {
-        // eslint-disable-next-line no-restricted-syntax
-        for (const [valKey, val] of Object.entries(items)) {
-          addUtilities({
-            [`.${prefix}-${valKey}`]: postcssJs.objectify(
-              postcss.parse(`${property}: ${val}`)
-            ),
-          });
-        }
-      } else {
-        const group = currentConfig.theme[key];
+      const tailwindPrefix = config('prefix', '');
+      const originalConfig = config(`theme.${key}`, []);
 
-        if (!group) {
-          return;
-        }
+      Object.entries(originalConfig).forEach(([configKey, value]) => {
+        const cssVariableName = `.${tailwindPrefix}${object.name}-${getFixedKey(
+          configKey
+        )}`;
 
-        Object.keys(group).forEach(groupKey => {
-          addUtilities({
-            [`.${prefix}-${groupKey}`]: postcssJs.objectify(
-              postcss.parse(`${property}: ${group[groupKey]}`)
-            ),
-          });
+        addUtilities({
+          [cssVariableName]: postcssJs.objectify(
+            postcss.parse(`${object.property}: ${value}`)
+          ),
         });
-      }
+      });
     });
   };
 });
