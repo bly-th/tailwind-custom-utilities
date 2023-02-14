@@ -6,28 +6,47 @@ const getFixedKey = key => {
   if (key === 'DEFAULT' || key === 'default') {
     return 'default';
   }
-  return key.replace('/', '-').replace('.', '_');
+  return key.replace('/', '-');
 };
 
 module.exports = plugin.withOptions(function (customUtilities = {}) {
   return function ({ config, addUtilities }) {
-    // eslint-disable-next-line no-restricted-syntax
+    const tailwindPrefix = config('prefix', '');
+    const entries = [];
+
     Object.entries(customUtilities).forEach(([key, object]) => {
       if (!object) return;
 
-      const tailwindPrefix = config('prefix', '');
       const originalConfig = config(`theme.${key}`, []);
 
       Object.entries(originalConfig).forEach(([configKey, value]) => {
-        const cssVariableName = `.${tailwindPrefix}${object.name}-${getFixedKey(
-          configKey
-        )}`;
+        if (Array.isArray(object)) {
+          object.forEach(entry => {
+            entries.push({
+              object: entry,
+              configKey,
+              value,
+            });
+          });
+        } else {
+          entries.push({
+            object,
+            configKey,
+            value,
+          });
+        }
+      });
+    });
 
-        addUtilities({
-          [cssVariableName]: postcssJs.objectify(
-            postcss.parse(`${object.property}: ${value}`)
-          ),
-        });
+    entries.forEach(entry => {
+      const cssVariableName = `.${tailwindPrefix}${
+        entry.object.name
+      }-${getFixedKey(entry.configKey)}`;
+
+      addUtilities({
+        [cssVariableName]: postcssJs.objectify(
+          postcss.parse(`${entry.object.property}: ${entry.value}`)
+        ),
       });
     });
   };
