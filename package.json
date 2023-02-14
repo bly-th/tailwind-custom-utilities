@@ -1,6 +1,6 @@
 {
   "name": "@bly-th/tailwind-custom-utilities",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Generates custom utility classes",
   "main": "index.js",
   "scripts": {
